@@ -8,48 +8,41 @@ class Indicator extends Field
 {
 
     /**
-     * Indicates if the element should be shown on the creation view.
-     *
-     * @var bool
-     */
-    public $showOnCreation = false;
-
-    /**
-     * Indicates if the element should be shown on the update view.
-     *
-     * @var bool
-     */
-    public $showOnUpdate = false;
-
-    /**
      * The field's component.
      *
      * @var string
      */
     public $component = 'indicator-field';
-
     /**
      * The callback to be used to hide the field.
      *
      * @var \Closure
      */
     public $hideCallback;
-
     /**
-     * Specify the labels that should be displayed.
+     * Indicates if the element should be shown on the creation view.
      *
-     * @param  array  $labels
-     * @return $this
+     * @var bool
      */
-    public function labels(array $labels)
-    {
-        return $this->withMeta(['labels' => $labels, 'withoutLabels' => false]);
-    }
+    public $showOnCreation = false;
+    /**
+     * Indicates if the element should be shown on the update view.
+     *
+     * @var bool
+     */
+    public $showOnUpdate = false;
+    /**
+     * The callback to be used to display labels based on other value.
+     *
+     * @var \Closure
+     */
+    public $valuesCallback;
 
     /**
      * Specify the colours that should be displayed.
      *
-     * @param  array  $colors
+     * @param array $colors
+     *
      * @return $this
      */
     public function colors(array $colors)
@@ -58,30 +51,45 @@ class Indicator extends Field
     }
 
     /**
-     * The label to display when the value is not one of the defined statuses.
+     * Specify the labels that should be displayed.
      *
-     * @param  string $label
+     * @param array $labels
+     *
      * @return $this
      */
-    public function unknown(string $label)
+    public function labels(array $labels)
     {
-        return $this->withMeta(['unknownLabel' => $label]);
+        return $this->withMeta(['labels' => $labels, 'withoutLabels' => false]);
     }
 
     /**
-     * Display the raw value instead of a label.
-     *
-     * @return $this
+     * @inheritDoc
      */
-    public function withoutLabels()
+    public function resolveForDisplay($resource, $attribute = null)
     {
-        return $this->withMeta(['withoutLabels' => true]);
+        parent::resolveForDisplay($resource, $attribute);
+
+        if (!is_null($this->valuesCallback)) {
+            $this->withMeta(['displayValue' => call_user_func($this->valuesCallback, $this->value, $resource)]);
+        }
+
+        if (!is_null($this->hideCallback)) {
+            if (is_callable($this->hideCallback)) {
+                $shouldHide = call_user_func($this->hideCallback, $this->value, $resource);
+            } elseif (is_array($this->hideCallback)) {
+                $shouldHide = in_array($this->value, $this->hideCallback, false);
+            } else {
+                $shouldHide = $this->value == $this->hideCallback;
+            }
+            $this->withMeta(['shouldHide' => (bool)$shouldHide]);
+        }
     }
 
     /**
      * Define the callback or value(s) that should be used to hide the field.
      *
-     * @param  callable|array|mixed  $hideCallback
+     * @param callable|array|mixed $hideCallback
+     *
      * @return $this
      */
     public function shouldHide($hideCallback)
@@ -98,7 +106,7 @@ class Indicator extends Field
      */
     public function shouldHideIfNo()
     {
-        $this->hideCallback = function($value) {
+        $this->hideCallback = function ($value) {
             return !$value;
         };
 
@@ -106,26 +114,36 @@ class Indicator extends Field
     }
 
     /**
-     * @inheritDoc
+     * The label to display when the value is not one of the defined statuses.
+     *
+     * @param string $label
+     *
+     * @return $this
      */
-    public function resolveForDisplay($resource, $attribute = null)
+    public function unknown(string $label)
     {
-        parent::resolveForDisplay($resource, $attribute);
+        return $this->withMeta(['unknownLabel' => $label]);
+    }
 
-        if (is_null($this->hideCallback)) {
-            return;
-        }
+    /**
+     * Display the raw value instead of a label.
+     *
+     * @return $this
+     */
+    public function useValues(callable $value = null)
+    {
+        $this->valuesCallback = $value;
 
-        if (is_callable($this->hideCallback)) {
-            $shouldHide = call_user_func($this->hideCallback, $this->value, $resource);
-        }
-        elseif (is_array($this->hideCallback)) {
-            $shouldHide = in_array($this->value, $this->hideCallback, false);
-        }
-        else {
-            $shouldHide = $this->value == $this->hideCallback;
-        }
+        return $this->withMeta(['useValues' => true, 'withoutLabels' => false]);
+    }
 
-        $this->withMeta(['shouldHide' => (bool) $shouldHide]);
+    /**
+     * Display only color coded dots
+     *
+     * @return $this
+     */
+    public function withoutLabels()
+    {
+        return $this->withMeta(['withoutLabels' => true]);
     }
 }

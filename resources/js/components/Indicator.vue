@@ -4,11 +4,11 @@
             class="inline-block indicator-grey rounded-full w-2 h-2 mr-1"
             v-bind="colorClassStyle"
         />
-        <span v-if="labelText">
-            {{ labelText }}
-        </span>
-        <span v-else-if="field.unknownLabel && !field.withoutLabels">{{ field.unknownLabel }}</span>
+      <template v-if="!field.withoutLabels">
+        <span v-if="labelText">{{ labelText }}</span>
+        <span v-else-if="field.unknownLabel">{{ field.unknownLabel }}</span>
         <span v-else>&mdash;</span>
+      </template>
     </span>
 </template>
 
@@ -18,8 +18,8 @@ export default {
 
     computed: {
         labelText() {
-            if (this.field.withoutLabels) {
-                return this.field.value
+            if (this.field.useValues) {
+                return this.field.displayValue ?? this.field.value
             }
             else if (this.field.labels && this.field.labels.hasOwnProperty(this.field.value)) {
                 return this.field.labels[this.field.value]

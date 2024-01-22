@@ -42,11 +42,27 @@ If a label is not defined for a value that appears in the field, the "unknown" l
 
 #### Without Labels
 
-If you do not need to specify a different label, you can simply display the raw field value:
+If you do not need to specify a label, you can simply display the color dot:
 
 ```php
 Indicator::make('Status')
     ->withoutLabels()
+```
+
+#### Use Values
+
+If you do not need to specify a different label, you can simply display the raw field value:
+
+```php
+Indicator::make('Status')
+    ->useValues()
+```
+
+Or you can display value other than the one used to determinate the colour indicator
+
+```php
+Indicator::make('Status')
+    ->useValues(function() { return $this->other_field; })
 ```
 
 #### Unknown Label
@@ -62,7 +78,7 @@ You can, of course use the Laravel `trans()` or `__()` functions to translate th
 
 If this is not set, an em dash will be displayed instead.
 
-This setting does not apply when `withoutLabels()` has been used. In that case, an unknown label will display with its raw value.
+This setting does not apply when `withoutLabels()` has been used.
 
 #### Should Hide
 
